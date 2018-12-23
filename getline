@@ -1,0 +1,86 @@
+#include <stdbool.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <inttypes.h>
+
+enum
+{
+    BASE_SIZE = 1
+};
+
+bool has_space(size_t size, size_t *cap, char **ptr) {
+    if (size == *cap) {
+        char *tmp = *ptr;
+        *cap *= 2;
+        tmp = realloc(tmp, *cap);
+        if (tmp == NULL) {
+            free(*ptr);
+            return false;
+        }
+        *ptr = tmp;
+    }
+    return true;
+}
+
+bool add_char(size_t *size, size_t *cap, char **ptr, char c) {
+    if (!has_space(*size, cap, ptr)) {
+        return false;
+    }
+    (*ptr)[*size] = c;
+    (*size)++;
+    return true;
+}
+
+char *getline2(FILE *f) {
+    char *ptr = NULL;
+    ptr = realloc(ptr, BASE_SIZE);
+    if (!ptr) {
+        return NULL;
+    }
+    int c;
+    size_t  size = 0;
+    size_t cap = BASE_SIZE;
+    bool notEmpty = false;
+    while ((c = fgetc(f)) != EOF && c != '\n') {
+        notEmpty = true;
+        if (!add_char(&size, &cap, &ptr, c)) {
+            return NULL;
+
+        }
+    }
+    if (c == '\n') {
+        if (!add_char(&size, &cap, &ptr, '\n')) {
+            return NULL;
+        }
+        if (!add_char(&size, &cap, &ptr, '\0')) {
+            return NULL;
+        }
+        return ptr;
+    } else {
+        if (notEmpty) {
+            if (!add_char(&size, &cap, &ptr, '\0')) {
+                return NULL;
+            }
+            return ptr;
+        }
+    }
+    free(ptr);
+    return NULL;
+}
+
+int main() {
+    FILE *fptr;
+    fptr = fopen("/Users/arinaruck/CLionProjects/acos/1/new.txt","w");
+    fprintf(fptr,"4\tlalalaLa\nlalal\n");
+    fprintf(fptr,"lalala\n");
+    fclose(fptr);
+    fptr = fopen("/Users/arinaruck/CLionProjects/acos/1/new.txt","r");
+    char *res;
+    res = getline2(fptr);
+    if (res == NULL) {
+        printf("NULL");
+    } else {
+        printf("%s", res);
+    }
+    fclose(fptr);
+}
