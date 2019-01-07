@@ -1,0 +1,81 @@
+#include <stdio.h>
+#include <stdlib.h>
+
+struct Node
+{
+    struct Node* next;
+    struct Node* prev;
+    int val;
+    size_t count;
+};
+
+struct Node* push(struct Node *node, int value, size_t count) {
+    struct Node *el = malloc(sizeof(struct Node));
+    el->val = value;
+    el->count = count;
+    el->next = node;
+    el->prev = NULL;
+    if (node != NULL) {
+        node->prev = el;
+    }
+    return el;
+}
+
+int delete(struct Node *node) {
+    struct Node *next = node->next;
+    struct Node *prev = node->prev;
+    if (prev != NULL) {
+        prev->next = next;
+    }
+    if (next != NULL) {
+        next->prev = prev;
+    }
+    int count = node->count;
+    free(node);
+    return count;
+}
+
+struct Node* find(struct Node* head, int value) {
+    struct Node *curr = head;
+    while (curr != NULL) {
+        if (curr->val == value) {
+            return curr;
+        }
+        curr = curr->next;
+    }
+    return NULL;
+}
+
+struct Node* update(struct Node* head, int value) {
+    struct Node *curr = find(head, value);
+    size_t count = 0;
+    if (curr == head && curr != NULL) {
+        head->count++;
+        return head;
+    }
+    if (curr != NULL) {
+        count = delete(curr);
+    }
+    return push(head, value, count + 1);
+}
+
+int main() {
+    struct Node* head = NULL;
+    int num;
+    while (scanf("%d", &num) != EOF) {
+        head = update(head, num);
+    }
+    struct Node *curr = head;
+    if (head == NULL) {
+        return 0;
+    }
+    while (curr->next != NULL) {
+        curr = curr->next;
+    }
+    while (curr != NULL) {
+        printf("%d %zu\n", curr->val, curr->count);
+        struct Node* prev = curr->prev;
+        free(curr);
+        curr = prev;
+    }
+}
