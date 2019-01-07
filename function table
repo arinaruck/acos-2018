@@ -1,0 +1,101 @@
+#include <stdbool.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <math.h>
+#include <memory.h>
+#include <ctype.h>
+
+typedef double (*funcptr)(double);
+
+typedef struct FunctionTable {
+    char *name;
+    funcptr func;
+} FunctionTable;
+
+static const FunctionTable table[] = {
+        {"cos", &cos},
+        {"exp", &exp},
+        {"log", &log},
+        {"sin", &sin},
+        {"sqrt", &sqrt},
+        {"tan", &tan},
+};
+
+bool has_space(size_t size, size_t *cap, char **ptr) {
+    if (size == *cap) {
+        char *tmp = *ptr;
+        *cap *= 2;
+        (*cap)++;
+        tmp = realloc(tmp, *cap);
+        if (tmp == NULL) {
+            free(*ptr);
+            return false;
+        }
+        *ptr = tmp;
+    }
+    return true;
+}
+
+bool add_char(size_t *size, size_t *cap, char **ptr, char c) {
+    if (!has_space(*size, cap, ptr)) {
+        return false;
+    }
+    (*ptr)[*size] = c;
+    (*size)++;
+    return true;
+}
+
+char *getstr(FILE *f) {
+    char *ptr = NULL;
+    int c;
+    size_t size = 0;
+    size_t cap = 0;
+    while ((c = fgetc(f)) != EOF && isspace(c)) {
+        continue;
+    }
+    if (c == EOF) {
+        return NULL;
+    }
+    do {
+        if (!add_char(&size, &cap, &ptr, c)) {
+            return NULL;
+        }
+    } while ((c = fgetc(f)) != EOF && !isspace(c));
+    if (!add_char(&size, &cap, &ptr, '\0')) {
+            return NULL;
+    }
+    return ptr;
+}
+
+
+int bin_search(char* funcName, int b, int e) {
+    if (e <= b) {
+        return -1;
+    }
+    int mid = b + (e - b) / 2;
+    int cmp = strcmp(funcName, table[mid].name);
+    if (cmp == 0) {
+        return mid;
+    } else if (cmp < 0) {
+        return bin_search(funcName, b, mid);
+    }
+    return bin_search(funcName, mid + 1, e);
+}
+
+int main()
+{
+    char *funcName;
+    double d;
+    int end = sizeof(table) / sizeof(table[0]);
+    while((funcName = getstr(stdin)) != NULL && scanf(" %lf", &d) != EOF) {
+        int i = bin_search(funcName, 0, end);
+        if (i == -1) {
+            printf("nan\n");
+        } else {
+            printf("%a\n", table[i].func(d));
+        }
+        free(funcName);
+        funcName = NULL;
+    }
+    free(funcName);
+}
